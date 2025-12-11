@@ -1,0 +1,97 @@
+-- ローカル専用：相手を完全に固まって見せる -- 
+
+local Players = gameGetService(Players)
+local LocalPlayer = Players.LocalPlayer
+
+--=== GUI ===--
+local gui = Instance.new(ScreenGui, game.CoreGui)
+gui.Name = LagFreezeGUI
+
+-- ボタン
+local btn = Instance.new(TextButton, gui)
+btn.Size = UDim2.new(0, 140, 0, 50)
+btn.Position = UDim2.new(0.5, -70, 0.2, 0)
+btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+btn.Text = 💀ラグ💀
+btn.Font = Enum.Font.GothamBold
+btn.TextSize = 22
+btn.BorderSizePixel = 0
+
+-- 角丸
+local corner = Instance.new(UICorner, btn)
+corner.CornerRadius = UDim.new(0, 12)
+
+-- UIStroke（虹色枠）
+local stroke = Instance.new(UIStroke, btn)
+stroke.Thickness = 2
+
+-- 虹色アニメーション
+task.spawn(function()
+	while true do
+		for h = 0,1,0.01 do
+			stroke.Color = Color3.fromHSV(h, 1, 1)
+			task.wait(0.02)
+		end
+	end
+end)
+
+--=== 通知関数 ===--
+local function notify(text)
+	local frame = Instance.new(Frame, gui)
+	frame.Size = UDim2.new(0, 260, 0, 50)
+	frame.Position = UDim2.new(1, -280, 1, -70)
+	frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	frame.BackgroundTransparency = 0.3
+
+	local c = Instance.new(UICorner, frame)
+	c.CornerRadius = UDim.new(0, 10)
+
+	local label = Instance.new(TextLabel, frame)
+	label.Size = UDim2.new(1, 0, 1, 0)
+	label.BackgroundTransparency = 1
+	label.TextColor3 = Color3.fromRGB(255, 255, 255)
+	label.Text = text
+	label.Font = Enum.Font.GothamBold
+	label.TextSize = 18
+
+	-- 3秒後削除
+	task.delay(3, function()
+		frameDestroy()
+	end)
+end
+
+--=== 固定処理 ===--
+local lagOn = false
+local storedPos = {}
+
+btn.MouseButton1ClickConnect(function()
+	lagOn = not lagOn
+	btn.Text = lagOn and 💀ラグ ON💀 or 💀ラグ💀
+
+	if lagOn then
+		notify(💀 ラグ化が完了しました！)
+
+		for _, plr in ipairs(PlayersGetPlayers()) do
+			if plr ~= LocalPlayer and plr.Character and plr.CharacterFindFirstChild(HumanoidRootPart) then
+				storedPos[plr] = plr.Character.HumanoidRootPart.CFrame
+			end
+		end
+
+		task.spawn(function()
+			while lagOn do
+				for _, plr in ipairs(PlayersGetPlayers()) do
+					if plr ~= LocalPlayer and plr.Character and plr.CharacterFindFirstChild(HumanoidRootPart) then
+						local root = plr.Character.HumanoidRootPart
+						if storedPos[plr] then
+							root.CFrame = storedPos[plr]
+						end
+					end
+				end
+				task.wait(0.03)
+			end
+		end)
+	else
+		notify(❌ ラグ化を解除しました)
+	end
+end)
